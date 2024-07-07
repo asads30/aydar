@@ -1,0 +1,15 @@
+.page{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+}
+
+.main{
+    height: calc(100vh - 76px);
+    padding: 20px;
+}
+
+.main.hide-menu{
+    height: 100vh;
+}
