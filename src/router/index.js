@@ -1,13 +1,15 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import PermissionsView from '../views/PermissionsView.vue'
-import BlogView from '../views/BlogView.vue'
+import BlogList from '../views/Blog/List.vue'
+import BlogItem from '../views/Blog/Item.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import AddView from '@/views/AddView.vue'
-import HunterVerifyView from '@/views/Hunter/VerifyView.vue'
-import HunterCodeView from '@/views/Hunter/CodeView.vue'
-import FishingVerifyView from '@/views/Fishing/VerifyView.vue'
-import FishingCodeView from '@/views/Fishing/CodeView.vue'
+import VerifyView from '@/views/VerifyView.vue'
+import CodeView from '@/views/CodeView.vue'
+import HunterOrderView from '@/views/Hunter/OrderView.vue'
+import FishingOrderView from '@/views/Fishing/OrderView.vue'
+import HunterSendView from '@/views/Hunter/SendView.vue'
 
 const routes = [
   {
@@ -16,14 +18,29 @@ const routes = [
     component: HomeView
   },
   {
+    path: '/verify',
+    name: 'verify',
+    component: VerifyView
+  },
+  {
+    path: '/verify/code',
+    name: 'code',
+    component: CodeView
+  },
+  {
     path: '/permissions',
     name: 'permissions',
     component: PermissionsView
   },
   {
     path: '/blog',
-    name: 'blog',
-    component: BlogView
+    name: 'blog-list',
+    component: BlogList
+  },
+  {
+    path: '/blog/:id',
+    name: 'blog-item',
+    component: BlogItem
   },
   {
     path: '/profile',
@@ -36,29 +53,24 @@ const routes = [
     component: AddView
   },
   {
-    path: '/hunter/verify',
-    name: 'hunterVerify',
-    component: HunterVerifyView
+    path: '/hunter/order',
+    name: 'hunterOrder',
+    component: HunterOrderView
   },
   {
-    path: '/hunter/code',
-    name: 'hunterCode',
-    component: HunterCodeView
+    path: '/hunter/send/:id',
+    name: 'hunterSend',
+    component: HunterSendView
   },
   {
-    path: '/fishing/verify',
-    name: 'fishingVerify',
-    component: FishingVerifyView
-  },
-  {
-    path: '/fishing/code',
-    name: 'fishingCode',
-    component: FishingCodeView
-  },
+    path: '/fishing/order',
+    name: 'fishingOrder',
+    component: FishingOrderView
+  }
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHashHistory(process.env.BASE_URL),
   routes
 })
 

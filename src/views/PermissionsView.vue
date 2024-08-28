@@ -12,24 +12,40 @@
             </ul>
             <div class="tab-content perms-content" id="permissionsTabContent">
                 <div class="tab-pane fade show active" id="perm1-tab-pane" role="tabpanel" aria-labelledby="perm1-tab" tabindex="0">
-                    <div class="perms-list">
-                        <router-link to="/permissions/01" class="perms-item">
+                    <div class="perms-list" v-if="getHunters?.length > 0">
+                        <router-link :to="'/permissions/' + item?.licenseId" class="perms-item" v-for="item in getHunters" :key="item?.licenseId">
                             <div class="perms-item-qr">
                                 <img src="@/assets/qr.png" alt="">
                             </div>
                             <div class="perms-item-text">
                                 <div class="perms-item-top">
-                                    <div class="perms-item-title">№0000002</div>
-                                    <div class="perms-item-status active">Активный</div>
+                                    <div class="perms-item-title">№{{ item?.licenseId }}</div>
+                                    <div class="perms-item-status active">{{ item?.status?.name_ru }}</div>
                                 </div>
-                                <div class="perms-item-des"><strong>Охота</strong></div>
-                                <div class="perms-item-des">01.09.2024 - 03.09.2024</div>
+                                <div class="perms-item-des">{{ item.startDate }} - {{ item.endDate }}</div>
                             </div>
                         </router-link>
                     </div>
+                    <div class="text-center" v-else>
+                        <p>Разрешений не найдено</p>
+                    </div>
                 </div>
                 <div class="tab-pane fade" id="perm2-tab-pane" role="tabpanel" aria-labelledby="perm2-tab" tabindex="0">
-                    <div class="text-center">
+                    <div class="perms-list" v-if="getFishing?.length > 0">
+                        <router-link :to="'/permissions/' + item?.licenseId" class="perms-item" v-for="item in getFishing" :key="item?.licenseId">
+                            <div class="perms-item-qr">
+                                <img src="@/assets/qr.png" alt="">
+                            </div>
+                            <div class="perms-item-text">
+                                <div class="perms-item-top">
+                                    <div class="perms-item-title">№{{ item?.licenseId }}</div>
+                                    <div class="perms-item-status active">{{ item?.status?.name_ru }}</div>
+                                </div>
+                                <div class="perms-item-des">{{ item.startDate }} - {{ item.endDate }}</div>
+                            </div>
+                        </router-link>
+                    </div>
+                    <div class="text-center" v-else>
                         <p>Разрешений не найдено</p>
                     </div>
                 </div>
@@ -40,18 +56,76 @@
     </div>
   </template>
   
-  <script>
-  import Menu from '@/components/Menu.vue'
-  
-  export default {
-    name: 'PermissionsView',
-    components: {
-      Menu
-    }
-  }
-  </script>
+<script>
+import Menu from '@/components/Menu.vue'
+import {mapGetters} from 'vuex';
+import axios from 'axios'
 
-  <style lang="scss">
+export default {
+    name: 'PermissionsView',
+    data() {
+        return {
+            list: null
+        }
+    },
+    computed: {
+        ...mapGetters([
+            "getToken"
+        ]),
+        getHunters(){
+            return this.list?.filter(item => item.type.id === 1);
+        },
+        getFishing(){
+            return this.list?.filter(item => item.type.id === 2)
+        }
+    },
+    components: {
+        Menu
+    },
+    mounted() {
+        if(this.getToken){
+            this.getLicenses()
+        } else{
+            let tg = window?.Telegram?.WebApp;
+            let user = tg?.initDataUnsafe;
+            tg?.BackButton?.hide();
+            tg?.expand();
+            let data = {
+                "user_id": user?.user?.id ? user?.user?.id : 386567097,
+                "first_name": user?.user?.first_name ? user?.user?.first_name : "Asadbek",
+                "last_name": user?.user?.last_name ? user?.user?.last_name : "Ibragimov",
+                "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
+                "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
+            }
+            axios.post('/api/getMe', data).then(res => {
+                if(res.status == 200){
+                    this.$store.commit('setUser', res.data.customer)
+                    this.$store.commit('setToken', res.data.token)
+                    this.getLicenses()
+                    if(res.data.customer.status == 0){
+                        this.$router.push('/verify')
+                    }
+                }
+            })
+        }
+    },
+    methods: {
+        getLicenses(){
+            axios.get('/api/licenses/get', {
+                headers: {
+                    Authorization: `Bearer ${this.getToken}`
+                }
+            }).then(res => {
+                if(res.status == 200){
+                    this.list = res.data.data
+                }
+            })
+        }
+    },
+}
+</script>
+
+<style lang="scss">
     .perms{
         &-tabs{
             border: 1px solid #EAE9EE;
@@ -96,16 +170,16 @@
             color: #000;
             text-decoration: none;
             &-qr{
-                width: 80px;
+                width: 50px;
                 img{
-                    width: 80px;
+                    width: 50px;
                 }
             }
             &-des{
                 font-size: 14px;
             }
             &-text{
-                width: calc(100% - 90px);
+                width: calc(100% - 60px);
             }
             &-top{
                 display: flex;
@@ -124,4 +198,4 @@
             }
         }
     }
-  </style>
+</style>

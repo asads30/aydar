@@ -1,24 +1,24 @@
 <template>
   <div class="home page">
     <div class="main">
-      <div class="not" v-if="active == 0">
+      <div class="not">
         <div class="not-icon">
           <img src="@/assets/not.png" alt="">
         </div>
         <router-link to="/add" class="not-btn">Оформить разрешение</router-link>
       </div>
-      <div class="active" v-else>
+      <div class="active" v-if="list">
         <div class="active-card">
           <div class="active-qr">
             <img src="@/assets/qr.png" alt="">
           </div>
           <div class="active-text">
-            <div class="active-title">№0000001</div>
-            <div class="active-des"><strong>Рыбалка</strong></div>
-            <div class="active-des">01.09.2024 - 03.09.2024</div>
+            <div class="active-title">№{{ list[0]?.licenseId }}</div>
+            <div class="active-des"><strong>{{ list[0]?.type?.name_ru }}</strong></div>
+            <div class="active-des">{{ list[0]?.startDate }} - {{ list[0]?.endDate }}</div>
           </div>
         </div>
-        <router-link to="/send" class="active-btn">Сдать отчет</router-link>
+        <router-link :to="{name: 'hunterSend', params: {id: list[0]?.licenseId}}" class="active-btn">Сдать отчет</router-link>
       </div>
     </div>
     <Menu />
@@ -28,16 +28,23 @@
 <script>
 import Menu from '@/components/Menu.vue'
 import axios from 'axios'
+import {mapGetters} from 'vuex';
 
 export default {
   name: 'HomeView',
   data() {
     return {
-      active: 0
+      active: 0,
+      list: null
     }
   },
   components: {
     Menu
+  },
+  computed: {
+    ...mapGetters([
+      "getToken"
+    ])
   },
   mounted() {
     let tg = window?.Telegram?.WebApp;
@@ -51,11 +58,29 @@ export default {
       "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
       "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
     }
-    axios.post('https://webapp.2bit.uz/api/v1/getMe', data).then(res => {
+    axios.post('/api/getMe', data).then(res => {
       if(res.status == 200){
-        this.$store.commit('setUser', res.data.data)
+        this.$store.commit('setUser', res.data.customer)
+        this.$store.commit('setToken', res.data.token)
+        this.getLicenses()
+        if(res.data.customer.status == 0){
+          this.$router.push('/verify')
+        }
       }
     })
+  },
+  methods: {
+    getLicenses(){
+      axios.get('/api/licenses/get', {
+        headers: {
+          Authorization: `Bearer ${this.getToken}`
+        }
+      }).then(res => {
+        if(res.status == 200){
+          this.list = res.data.data
+        }
+      })
+    }
   },
 }
 </script>

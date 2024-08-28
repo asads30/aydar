@@ -3,27 +3,45 @@
       <div class="main">
         <div class="profile-box">
             <div class="profile-top">
-                <div class="profile-title">Мой профиль</div>
-                <div class="profile-item">
-                    <div class="profile-item-title">ФИО</div>
-                    <input type="text" placeholder="Имя" v-model="name" inputmode="text">
-                    <input type="text" placeholder="Фамилия" v-model="surname" inputmode="text">
+                <div class="profile-top-box">
+                    <div class="profile-title">Мой профиль</div>
+                    <div class="profile-top-right">
+                        <div class="profile-verify" v-if="getUser?.status == 1"><i class="fa-regular fa-circle-check"></i> Верифицирован</div>
+                        <div class="profile-verify not" v-else><i class="fa-regular fa-circle-check"></i> Не верифицирован</div>
+                    </div>
                 </div>
-                <div class="profile-item">
-                    <div class="profile-item-title">Username</div>
-                    <input type="text" placeholder="@username" v-model="username" inputmode="text">
-                </div>
-                <div class="profile-item">
-                    <div class="profile-item-title">Номер телефона</div>
-                    <input :value="phone" v-imask="mask" inputmode="tel">
-                </div>
-                <div class="profile-item">
-                    <div class="profile-item-title">Разрешение на оружие</div>
-                    <input type="text" placeholder="KA 000 000 00" v-model="weaponsPermits" inputmode="text">
+                <div class="profile-list">
+                    <div class="profile-item">
+                        <div class="profile-item-title">ФИО</div>
+                        <input type="text" placeholder="Имя" v-model="name" inputmode="text">
+                        <input type="text" placeholder="Фамилия" v-model="surname" inputmode="text">
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-item-title">Username</div>
+                        <input type="text" placeholder="@username" v-model="username" inputmode="text">
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-item-title">Номер телефона</div>
+                        <input :value="phone" v-imask="mask" inputmode="tel" readonly disabled />
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-item-title">Разрешение на охоту</div>
+                        <input type="text" placeholder="AB 000 00" v-model="huntingPermit" inputmode="text">
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-item-title">Разрешение на оружие</div>
+                        <input type="text" placeholder="KA 000 000" v-model="weaponPermit" inputmode="text">
+                    </div>
                 </div>
             </div>
             <div class="profile-bottom">
-                <button class="profile-btn">Сохранить</button>
+                <button class="verify-btn" @click="saveUser" :disabled="loading">
+                    <template v-if="loading">
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span role="status"> Загрузка...</span>
+                    </template>
+                    <template v-else>Сохранить</template>
+                </button>
             </div>
         </div>
       </div>
@@ -41,11 +59,13 @@ export default {
     name: 'ProfileView',
     data() {
         return {
+            loading: false,
             name: '',
             surname: '',
             username: '',
             phone: '',
-            weaponsPermits: '',
+            huntingPermit: '',
+            weaponPermit: '',
             value: '',
             mask: {
                 mask: '{998} 00 000 00 00',
@@ -61,7 +81,8 @@ export default {
     },
     computed: {
         ...mapGetters([
-            "getUser"
+            "getUser",
+            "getToken"
         ])
     },
     mounted() {
@@ -70,6 +91,8 @@ export default {
             this.surname = this.getUser.surname,
             this.username = this.getUser.userName,
             this.phone = this.getUser.phoneNumber
+            this.huntingPermit = this.getUser.huntingPermit
+            this.weaponPermit = this.getUser.weaponPermit
         } else{
             let tg = window?.Telegram?.WebApp;
             let user = tg?.initDataUnsafe;
@@ -82,26 +105,39 @@ export default {
                 "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
                 "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
             }
-            axios.post('https://webapp.2bit.uz/api/v1/getMe', data).then(res => {
+            axios.post('/api/getMe', data).then(res => {
                 if(res.status == 200){
-                    this.$store.commit('setUser', res.data.data)
-                    this.name = this.getUser.name,
-                    this.surname = this.getUser.surname,
-                    this.username = this.getUser.userName,
-                    this.phone = this.getUser.phoneNumber
+                    this.$store.commit('setUser', res.data.customer)
+                    this.$store.commit('setToken', res.data.token)
+                    this.name = res.data.customer.name,
+                    this.surname = res.data.customer.surname,
+                    this.username = res.data.customer.userName,
+                    this.phone = res.data.customer.phoneNumber
+                    this.huntingPermit = res.data.customer.huntingPermit
+                    this.weaponPermit = res.data.customer.weaponPermit
                 }
             })
         }
     },
     methods: {
-        onAccept (e) {
-            const maskRef = e.detail;
-            this.value = maskRef.value;
-            console.log('accept', maskRef.value);
-        },
-        onComplete (e) {
-            const maskRef = e.detail;
-            console.log('complete', maskRef.unmaskedValue);
+        saveUser(){
+            this.loading = true
+            const data = {
+                name: this.name,
+                surname: this.surname,
+                hunting_permit: this.huntingPermit,
+                weapon_permit: this.weaponPermit
+            }
+            axios.post('https://webapp.2bit.uz/api/v1/customer/update', data, {
+                headers: {
+                    Authorization: `Bearer ${this.getToken}`
+                }
+            }).then(res => {
+                if(res.status == 200){
+                    this.loading = false
+                    this.$notify("Данные успешно сохранены!");
+                }
+            })
         },
     },
 }
@@ -109,9 +145,36 @@ export default {
 
   <style lang="scss">
     .profile{
+        &-list{
+            height: calc(100vh - 226px);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        &-top{
+            &-box{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+        }
+        &-verify{
+            color: #fff;
+            background: #2ecc71;
+            height: 25px;
+            line-height: 25px;
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        &-verify.not{
+            background: #e74c3c;
+        }
         &-title{
             font-size: 20px;
-            margin-bottom: 20px;
             font-weight: 700;
         }
         &-box{
@@ -139,6 +202,9 @@ export default {
                     outline: 0;
                     transition: 0.25s;
                 }
+            }
+            &:last-child{
+                margin-bottom: 0;
             }
         }
         &-btn{
