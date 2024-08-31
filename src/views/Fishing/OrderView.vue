@@ -67,7 +67,8 @@
         },
         computed: {
             ...mapGetters([
-                "getToken"
+                "getToken",
+                "getUser"
             ])
         },
         mounted() {
@@ -132,8 +133,19 @@
                         Authorization: `Bearer ${this.getToken}`
                     }
                 }).then(res => {
-                    this.$notify(res.data.message);
-                    this.$router.push('/')
+                    if(res){
+                        let data = {
+                            license_id: res?.data?.license_id,
+                            phone_number: '+' + this.getUser?.phoneNumber
+                        }
+                        axios.post('/api/payment/initiate', data, {
+                            headers: {
+                                Authorization: `Bearer ${this.getToken}`
+                            }
+                        }).then(result => {
+                            window.location.href = result?.data?.payment_url
+                        })
+                    }
                 })
             },
             goHome(){
