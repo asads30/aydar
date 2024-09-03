@@ -186,7 +186,7 @@
     }
 </script>
   
-<style lang="scss">
+<style lang="scss" scoped>
     .order{
         &-title{
             text-align: center;
@@ -201,10 +201,19 @@
             justify-content: space-between;
             height: 100%;
         }
+        &-top{
+            padding-bottom: 180px;
+        }
         &-bottom{
             display: flex;
             flex-direction: column;
             gap: 20px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            left: 0;
+            padding: 20px;
+            background: #fff;
         }
         &-btn{
             width: 100%;
@@ -229,7 +238,7 @@
             flex-direction: column;
             gap: 10px;
             background: #dfe6e9;
-            padding: 20px;
+            padding: 15px;
             border-radius: 5px;
         }
         &-price{
@@ -243,9 +252,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: 8px;
             &-name{
-                font-size: 14px;
+                font-size: 12px;
                 font-weight: 700;
                 color: #000;
                 width: 30%;
@@ -254,7 +263,7 @@
                 text-align: center;
                 width: 40%;
                 color: #000;
-                font-size: 14px;
+                font-size: 12px;
             }
             &-box{
                 display: flex;

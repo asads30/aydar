@@ -1,25 +1,32 @@
 <template>
   <div class="home page">
     <div class="main">
-      <div class="not">
-        <div class="not-icon">
-          <img src="@/assets/not.png" alt="">
+      <div class="loading" v-if="loading == true">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
-        <router-link to="/add" class="not-btn">Оформить разрешение</router-link>
       </div>
-      <div class="active" v-if="list">
-        <div class="active-card">
-          <div class="active-qr">
-            <img src="@/assets/qr.png" alt="">
+      <template v-else>
+        <div class="not">
+          <div class="not-icon">
+            <img src="@/assets/not.png" alt="">
           </div>
-          <div class="active-text">
-            <div class="active-title">№{{ list[0]?.licenseId }}</div>
-            <div class="active-des"><strong>{{ list[0]?.type?.name_ru }}</strong></div>
-            <div class="active-des">{{ list[0]?.startDate }} - {{ list[0]?.endDate }}</div>
-          </div>
+          <router-link to="/add" class="not-btn">Оформить разрешение</router-link>
         </div>
-        <router-link :to="{name: 'hunterSend', params: {id: list[0]?.licenseId}}" class="active-btn">Сдать отчет</router-link>
-      </div>
+        <div class="active" v-if="list.length > 0">
+          <div class="active-card">
+            <div class="active-qr">
+              <img src="@/assets/qr.png" alt="">
+            </div>
+            <div class="active-text">
+              <div class="active-title">№{{ list[0]?.licenseId }}</div>
+              <div class="active-des"><strong>{{ list[0]?.type?.name_ru }}</strong></div>
+              <div class="active-des">{{ list[0]?.startDate }} - {{ list[0]?.endDate }}</div>
+            </div>
+          </div>
+          <router-link :to="{name: 'hunterSend', params: {id: list[0]?.licenseId}}" class="active-btn">Сдать отчет</router-link>
+        </div>
+      </template>
     </div>
     <Menu />
   </div>
@@ -35,7 +42,8 @@ export default {
   data() {
     return {
       active: 0,
-      list: null
+      list: [],
+      loading: false
     }
   },
   components: {
@@ -47,6 +55,7 @@ export default {
     ])
   },
   mounted() {
+    this.loading = true
     let tg = window?.Telegram?.WebApp;
     let user = tg?.initDataUnsafe;
     tg?.BackButton?.hide();
@@ -63,6 +72,7 @@ export default {
         this.$store.commit('setUser', res.data.customer)
         this.$store.commit('setToken', res.data.token)
         this.getLicenses()
+        this.loading = false
         if(res.data.customer.status == 0){
           this.$router.push('/verify')
         }

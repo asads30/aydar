@@ -155,7 +155,7 @@
     }
 </script>
   
-<style lang="scss">
+<style lang="scss" scoped>
     .order{
         &-title{
             text-align: center;
