@@ -10,6 +10,7 @@ import CodeView from '@/views/CodeView.vue'
 import HunterOrderView from '@/views/Hunter/OrderView.vue'
 import FishingOrderView from '@/views/Fishing/OrderView.vue'
 import HunterSendView from '@/views/Hunter/SendView.vue'
+import SuccessView from '@/views/SuccessView.vue'
 
 const routes = [
   {
@@ -66,6 +67,11 @@ const routes = [
     path: '/fishing/order',
     name: 'fishingOrder',
     component: FishingOrderView
+  },
+  {
+    path: '/success',
+    name: 'success',
+    component: SuccessView
   }
 ]
 

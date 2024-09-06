@@ -13,14 +13,14 @@
             <div class="tab-content perms-content" id="permissionsTabContent">
                 <div class="tab-pane fade show active" id="perm1-tab-pane" role="tabpanel" aria-labelledby="perm1-tab" tabindex="0">
                     <div class="perms-list" v-if="getHunters?.length > 0">
-                        <router-link :to="'/permissions/' + item?.licenseId" class="perms-item" v-for="item in getHunters" :key="item?.licenseId">
+                        <router-link :to="'/hunter/send/' + item?.licenseId" class="perms-item" v-for="item in getHunters" :key="item?.licenseId">
                             <div class="perms-item-qr">
                                 <img src="@/assets/qr.png" alt="">
                             </div>
                             <div class="perms-item-text">
                                 <div class="perms-item-top">
                                     <div class="perms-item-title">№{{ item?.licenseId }}</div>
-                                    <div class="perms-item-status active">{{ item?.status?.name_ru }}</div>
+                                    <div :class="'perms-item-status perms-item-status-' + item?.status?.id">{{ item?.status?.name_ru }}</div>
                                 </div>
                                 <div class="perms-item-des">{{ item.startDate }} - {{ item.endDate }}</div>
                             </div>
@@ -32,7 +32,7 @@
                 </div>
                 <div class="tab-pane fade" id="perm2-tab-pane" role="tabpanel" aria-labelledby="perm2-tab" tabindex="0">
                     <div class="perms-list" v-if="getFishing?.length > 0">
-                        <router-link :to="'/permissions/' + item?.licenseId" class="perms-item" v-for="item in getFishing" :key="item?.licenseId">
+                        <router-link :to="'/hunter/send/' + item?.licenseId" class="perms-item" v-for="item in getFishing" :key="item?.licenseId">
                             <div class="perms-item-qr">
                                 <img src="@/assets/qr.png" alt="">
                             </div>
@@ -73,10 +73,12 @@ export default {
             "getToken"
         ]),
         getHunters(){
-            return this.list?.filter(item => item.type.id === 1);
+            let result = this.list?.filter(item => item.type.id === 1);
+            return result?.slice().reverse();
         },
         getFishing(){
-            return this.list?.filter(item => item.type.id === 2)
+            let result = this.list?.filter(item => item.type.id === 2);
+            return result?.slice().reverse();
         }
     },
     components: {
@@ -195,6 +197,24 @@ export default {
                 padding: 0 5px;
                 border-radius: 5px;
                 line-height: 20px;
+            }
+            &-status{
+                background: #2f3542;
+                color: #fff;
+                font-size: 12px;
+                height: 20px;
+                padding: 0 5px;
+                border-radius: 5px;
+                line-height: 20px;
+            }
+            &-status-1{
+                background: #2ecc71;
+            }
+            &-status-2{
+                background: #b33939;
+            }
+            &-status-3{
+                background: #ffa502;
             }
         }
     }

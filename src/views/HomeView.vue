@@ -7,13 +7,13 @@
         </div>
       </div>
       <template v-else>
-        <div class="not">
+        <div class="not" v-if="getUser?.isLicense === 0">
           <div class="not-icon">
             <img src="@/assets/not.png" alt="">
           </div>
           <router-link to="/add" class="not-btn">Оформить разрешение</router-link>
         </div>
-        <div class="active" v-if="list.length > 0">
+        <div class="active" v-else>
           <div class="active-card">
             <div class="active-qr">
               <img src="@/assets/qr.png" alt="">
@@ -24,7 +24,8 @@
               <div class="active-des">{{ list[0]?.startDate }} - {{ list[0]?.endDate }}</div>
             </div>
           </div>
-          <router-link :to="{name: 'hunterSend', params: {id: list[0]?.licenseId}}" class="active-btn">Сдать отчет</router-link>
+          <button class="active-btn" @click="hunterSend(list[0]?.licenseId)" v-if="list[0]?.status?.id == 1 || list[0]?.status?.id == 5">Подробнее</button>
+          <button class="active-btn" @click="hunterSend(list[0]?.licenseId)" v-if="list[0]?.status?.id == 4">Сдать отчет</button>
         </div>
       </template>
     </div>
@@ -51,7 +52,8 @@ export default {
   },
   computed: {
     ...mapGetters([
-      "getToken"
+      "getToken",
+      "getUser"
     ])
   },
   mounted() {
@@ -87,9 +89,18 @@ export default {
         }
       }).then(res => {
         if(res.status == 200){
-          this.list = res.data.data
+          if(res.data.data.length > 0){
+            res.data.data.forEach(item => {
+              if(item.status.id == 1){
+                this.list.push(item)
+              }
+            });
+          }
         }
       })
+    },
+    hunterSend(id){
+      this.$router.push({name: 'hunterSend', params: {id: id}})
     }
   },
 }

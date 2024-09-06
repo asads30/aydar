@@ -140,6 +140,7 @@
                 }
             },
             createOrder(){
+                this.loading = true
                 let animals = []
                 this.prices.forEach((price, index) => {
                     if(price > 0){
@@ -176,6 +177,12 @@
                         }).then(result => {
                             window.location.href = result?.data?.payment_url
                         })
+                    }
+                    this.loading = false
+                }).catch(err => {
+                    if(err){
+                        this.loading = false
+                        this.$notify(err?.response?.data?.message);
                     }
                 })
             },
