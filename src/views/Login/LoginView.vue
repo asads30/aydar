@@ -3,21 +3,21 @@
       <div class="main hide-menu">
         <div class="verify-box">
             <div class="verify-top">
-                <div class="verify-title">Подтвердить</div>
+                <div class="verify-title">Регистрация</div>
                 <div class="verify-list">
                     <div class="profile-item">
-                        <div class="profile-item-title">Код подтверждения</div>
-                        <input v-model="code" v-imask="codemask" inputmode="tel">
+                        <div class="profile-item-title">Номер телефона</div>
+                        <input v-model="phone" v-imask="phonemask" inputmode="tel" @input="handleInput" ref="phoneInput">
                     </div>
                 </div>
             </div>
             <div class="verify-bottom">
-                <button class="verify-btn" @click="confirmCode" :disabled="loading">
+                <button class="verify-btn" @click="verify" :disabled="loading">
                     <template v-if="loading">
                         <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                        <span role="status"> Загрузка...</span>
+                        <span role="status"> Регистрирую...</span>
                     </template>
-                    <template v-else>Подтвердить</template>
+                    <template v-else>Зарегистрироваться</template>
                 </button>
             </div>
         </div>
@@ -26,52 +26,50 @@
   </template>
   
 <script>  
-    import { IMaskDirective } from 'vue-imask';
     import axios from 'axios'
-    import {mapGetters} from 'vuex';
+    import { IMaskDirective } from 'vue-imask';
 
     export default {
-        name: 'CodeView',
+        name: 'LoginView',
         data() {
             return {
                 loading: false,
-                code: '',
-                codemask: {
-                    mask: '000000',
+                name: '',
+                surname: '',
+                phone: '',
+                phonemask: {
+                    mask: '{998} 00 000 00 00',
                     lazy: true
                 }
             }
-        },
-        computed: {
-            ...mapGetters([
-                "getUser",
-                "getPhone",
-                "getToken"
-            ])
         },
         directives: {
             imask: IMaskDirective
         },
         methods: {
-            confirmCode(){
+            verify(){
                 this.loading = true
                 let data = {
-                    user_id: this.getUser.userId,
-                    phone_number: this.getPhone,
-                    verification_code: this.code
+                    phone_number: this.phone.replace(/\s/g, '')
                 }
-                axios.post('https://webapp.2bit.uz/api/v1/verify/check', data, {
-                    headers: {
-                        Authorization: `Bearer ${this.getToken}`
-                    }
-                }).then(res => {
+                axios.post('https://webapp.2bit.uz/api/v1/verify/send', data).then(res => {
                     if(res.status == 200){
+                        this.$store.commit('setPhone', this.phone.replace(/\s/g, ''))
                         this.loading = false
-                        this.$router.push('/')
+                        this.$router.push('/login/code')
                     }
                 }).catch(err => {
+                    this.$notify({
+                        type: 'error',
+                        text: err?.response?.data?.message
+                    });
                     this.loading = false
                 })
+            },
+            handleInput() {
+                if (this.phone.length === 17) {
+                    this.$refs.phoneInput.blur();
+                }
             }
         },
     }

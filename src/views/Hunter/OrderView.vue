@@ -91,10 +91,11 @@
         mounted() {
             const startDate = new Date();
             const endDate = new Date(new Date().setDate(startDate.getDate() + 3));
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             this.date = [startDate, endDate];
             axios.get('/api/regions', {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){
@@ -103,7 +104,7 @@
             })
             axios.get('/api/districts', {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){
@@ -112,7 +113,7 @@
             })
             axios.get('/api/animals/grouped-by-category', {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){
@@ -160,9 +161,10 @@
                     statusId: 1,
                     animals: animals
                 }
+                let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
                 axios.post('https://webapp.2bit.uz/api/v1/licenses/create', data, {
                     headers: {
-                        Authorization: `Bearer ${this.getToken}`
+                        Authorization: `Bearer ${token}`
                     }
                 }).then(res => {
                     if(res){
@@ -172,7 +174,7 @@
                         }
                         axios.post('/api/payment/initiate', data, {
                             headers: {
-                                Authorization: `Bearer ${this.getToken}`
+                                Authorization: `Bearer ${token}`
                             }
                         }).then(result => {
                             window.location.href = result?.data?.payment_url

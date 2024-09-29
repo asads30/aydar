@@ -22,6 +22,7 @@
                                     :size="100"
                                     :level="'S'"
                                 />
+                                <button class="send-qr-btn" @click="generatePdf">Скачать</button>
                             </div>
                         </div>
                         <div class="send-summ">Сумма заказа: <strong>{{ formatPrice(item?.sum) }} сум</strong></div>
@@ -35,7 +36,7 @@
                                 <div class="send-animal-name">{{ animal?.animal?.name_ru }}</div>
                                 <div class="send-animal-value">{{ animal?.count }}</div>
                                 <div class="send-animal-value2">
-                                    <input inputmode="numeric" v-model="animals[index].value" :max="animal?.count" :disabled="item?.status?.id !== 1 || item?.status?.id !== 4" v-if="item?.status?.id == 1 || item?.status?.id == 4">
+                                    <input inputmode="numeric" v-model="animals[index].value" :max="animal?.count" :disabled="item?.status?.id == 2 || item?.status?.id == 3 || item?.status?.id == 5" v-if="item?.status?.id == 1 || item?.status?.id == 4">
                                     <span v-else>{{ animal?.countAfter }}</span>
                                 </div>
                             </div>
@@ -70,31 +71,7 @@ export default {
     mounted() {
         window.Telegram.WebApp.BackButton.show();
         window.Telegram.WebApp.onEvent('backButtonClicked', this.goHome);
-        if(this.getToken){
-            this.getLicenseById()
-        } else{
-            let tg = window?.Telegram?.WebApp;
-            let user = tg?.initDataUnsafe;
-            tg?.BackButton?.hide();
-            tg?.expand();
-            let data = {
-                "user_id": user?.user?.id ? user?.user?.id : 386567097,
-                "first_name": user?.user?.first_name ? user?.user?.first_name : "Asadbek",
-                "last_name": user?.user?.last_name ? user?.user?.last_name : "Ibragimov",
-                "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
-                "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
-            }
-            axios.post('/api/getMe', data).then(res => {
-                if(res.status == 200){
-                    this.$store.commit('setUser', res.data.customer)
-                    this.$store.commit('setToken', res.data.token)
-                    this.getLicenseById()
-                    if(res.data.customer.status == 0){
-                        this.$router.push('/verify')
-                    }
-                }
-            })
-        }
+        this.getLicenseById();
     },
     computed: {
         id(){
@@ -109,9 +86,10 @@ export default {
             this.$router.push('/')
         },
         getLicenseById(){
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             axios.get(`/api/licenses/get?license_id=${this.id}`, {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){
@@ -140,13 +118,27 @@ export default {
                 license_id: this.id,
                 animals: list
             }
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             axios.post('/api/licenses/close', data, {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){
                     this.$notify(res.data.message);
+                    this.$router.push('/')
+                }
+            })
+        },
+        generatePdf(){
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
+            axios.get(`/api/licenses/pdf?number=${this.item.UUID}&send=true`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(res => {
+                if(res){
+                    this.$notify('PDF успешно скачан, закройте приложение и перейдите в бот');
                 }
             })
         }
@@ -289,6 +281,19 @@ export default {
                         
                     }
                 }
+            }
+        }
+        &-qr{
+            text-align: center;
+            &-btn{
+                font-size: 14px;
+                background: #2ecc71;
+                border: 0;
+                color: #fff;
+                font-weight: 500;
+                padding: 5px 10px;
+                border-radius: 5px;
+                text-decoration: none;
             }
         }
     }

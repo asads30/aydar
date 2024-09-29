@@ -3,21 +3,21 @@
       <div class="main hide-menu">
         <div class="verify-box">
             <div class="verify-top">
-                <div class="verify-title">Регистрация</div>
+                <div class="verify-title">Подтвердить</div>
                 <div class="verify-list">
                     <div class="profile-item">
-                        <div class="profile-item-title">Номер телефона</div>
-                        <input v-model="phone" v-imask="phonemask" inputmode="tel">
+                        <div class="profile-item-title">Код подтверждения</div>
+                        <input v-model="code" v-imask="codemask" inputmode="numeric" @input="handleInput" ref="codeInput">
                     </div>
                 </div>
             </div>
             <div class="verify-bottom">
-                <button class="verify-btn" @click="verify" :disabled="loading">
+                <button class="verify-btn" @click="confirmCode" :disabled="loading">
                     <template v-if="loading">
                         <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                        <span role="status"> Регистрирую...</span>
+                        <span role="status"> Загрузка...</span>
                     </template>
-                    <template v-else>Зарегистрироваться</template>
+                    <template v-else>Подтвердить</template>
                 </button>
             </div>
         </div>
@@ -26,53 +26,57 @@
   </template>
   
 <script>  
-    import { IMaskDirective } from 'vue-imask';
     import axios from 'axios'
+    import { IMaskDirective } from 'vue-imask';
     import {mapGetters} from 'vuex';
 
     export default {
-        name: 'VerifyView',
+        name: 'CodeView',
         data() {
             return {
                 loading: false,
-                name: '',
-                surname: '',
-                phone: '',
-                phonemask: {
-                    mask: '{998} 00 000 00 00',
+                code: '',
+                codemask: {
+                    mask: '000000',
                     lazy: true
                 }
             }
         },
         computed: {
             ...mapGetters([
-                "getUser",
-                "getToken"
+                "getPhone",
             ])
         },
         directives: {
             imask: IMaskDirective
         },
         methods: {
-            verify(){
+            confirmCode(){
                 this.loading = true
                 let data = {
-                    user_id: this.getUser.userId,
-                    phone_number: this.phone.replace(/\s/g, '')
+                    phone_number: this.getPhone,
+                    verification_code: this.code
                 }
-                axios.post('https://webapp.2bit.uz/api/v1/verify/send', data, {
-                    headers: {
-                        Authorization: `Bearer ${this.getToken}`
-                    }
-                }).then(res => {
+                axios.post('https://webapp.2bit.uz/api/v1/verify/check', data).then(res => {
                     if(res.status == 200){
-                        this.$store.commit('setPhone', this.phone.replace(/\s/g, ''))
                         this.loading = false
-                        this.$router.push('/verify/code')
+                        localStorage.setItem('auth_token', res?.data?.token)
+                        this.$store.commit('setToken', res?.data?.token)
+                        this.$store.commit('setUser', res?.data?.customer)
+                        if(res?.data?.customer?.name){
+                            this.$router.push('/')
+                        } else{
+                            this.$router.push('/verify')
+                        }
                     }
                 }).catch(err => {
                     this.loading = false
                 })
+            },
+            handleInput() {
+                if (this.code.length === 6) {
+                    this.$refs.codeInput.blur();
+                }
             }
         },
     }

@@ -70,7 +70,8 @@ export default {
     },
     computed: {
         ...mapGetters([
-            "getToken"
+            "getToken",
+            "getUser"
         ]),
         getHunters(){
             let result = this.list?.filter(item => item.type.id === 1);
@@ -85,37 +86,45 @@ export default {
         Menu
     },
     mounted() {
-        if(this.getToken){
-            this.getLicenses()
-        } else{
+        if(!this.getUser){
             let tg = window?.Telegram?.WebApp;
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             let user = tg?.initDataUnsafe;
             tg?.BackButton?.hide();
             tg?.expand();
-            let data = {
-                "user_id": user?.user?.id ? user?.user?.id : 386567097,
-                "first_name": user?.user?.first_name ? user?.user?.first_name : "Asadbek",
-                "last_name": user?.user?.last_name ? user?.user?.last_name : "Ibragimov",
-                "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
-                "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
+            axios.post('https://webapp.2bit.uz/api/v1/getMe', {
+                user_id: user?.user?.id
+            }, {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-            axios.post('/api/getMe', data).then(res => {
+            }).then(res => {
                 if(res.status == 200){
+                    localStorage.setItem('auth_token', res?.data?.token)
+                    this.$store.commit('setToken', res?.data?.token)
+                    if(res.data.customer.name){
                     this.$store.commit('setUser', res.data.customer)
-                    this.$store.commit('setToken', res.data.token)
                     this.getLicenses()
-                    if(res.data.customer.status == 0){
-                        this.$router.push('/verify')
+                    this.loading = false
+                    } else{
+                    this.$router.push('/verify')
                     }
+                }
+            }).catch(err => {
+                if(err.response.status === 401){
+                    this.$router.push('/login')
+                    localStorage.clear()
                 }
             })
         }
+        this.getLicenses()
     },
     methods: {
         getLicenses(){
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             axios.get('/api/licenses/get', {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){

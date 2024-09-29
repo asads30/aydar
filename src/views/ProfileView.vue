@@ -42,6 +42,13 @@
                     </template>
                     <template v-else>Сохранить</template>
                 </button>
+                <button class="profile-out" @click="signOut" :disabled="loadingOut">
+                    <template v-if="loadingOut">
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span role="status"> Загрузка...</span>
+                    </template>
+                    <template v-else>Выйти</template>
+                </button>
             </div>
         </div>
       </div>
@@ -60,6 +67,7 @@ export default {
     data() {
         return {
             loading: false,
+            loadingOut: false,
             name: '',
             surname: '',
             username: '',
@@ -94,27 +102,31 @@ export default {
             this.huntingPermit = this.getUser.huntingPermit
             this.weaponPermit = this.getUser.weaponPermit
         } else{
+            this.loading = true
             let tg = window?.Telegram?.WebApp;
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             let user = tg?.initDataUnsafe;
             tg?.BackButton?.hide();
-            tg?.expand();
-            let data = {
-                "user_id": user?.user?.id ? user?.user?.id : 386567097,
-                "first_name": user?.user?.first_name ? user?.user?.first_name : "Asadbek",
-                "last_name": user?.user?.last_name ? user?.user?.last_name : "Ibragimov",
-                "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
-                "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
-            }
-            axios.post('/api/getMe', data).then(res => {
+            axios.post('https://webapp.2bit.uz/api/v1/getMe', {
+                user_id: user?.user?.id
+            }, {headers: {
+                Authorization: `Bearer ${token}`
+            }}).then(res => {
                 if(res.status == 200){
-                    this.$store.commit('setUser', res.data.customer)
-                    this.$store.commit('setToken', res.data.token)
-                    this.name = res.data.customer.name,
-                    this.surname = res.data.customer.surname,
-                    this.username = res.data.customer.userName,
-                    this.phone = res.data.customer.phoneNumber
-                    this.huntingPermit = res.data.customer.huntingPermit
-                    this.weaponPermit = res.data.customer.weaponPermit
+                    localStorage.setItem('auth_token', res?.data?.token)
+                    this.$store.commit('setToken', res?.data?.token)
+                    if(res.data.customer.name){
+                        this.$store.commit('setUser', res.data.customer)
+                        this.getLicenses()
+                        this.loading = false
+                    } else{
+                        this.$router.push('/verify')
+                    }
+                }
+            }).catch(err => {
+                if(err.response.status === 401){
+                    this.$router.push('/login')
+                    localStorage.clear()
                 }
             })
         }
@@ -122,6 +134,7 @@ export default {
     methods: {
         saveUser(){
             this.loading = true
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
             const data = {
                 name: this.name,
                 surname: this.surname,
@@ -130,7 +143,7 @@ export default {
             }
             axios.post('https://webapp.2bit.uz/api/v1/customer/update', data, {
                 headers: {
-                    Authorization: `Bearer ${this.getToken}`
+                    Authorization: `Bearer ${token}`
                 }
             }).then(res => {
                 if(res.status == 200){
@@ -139,6 +152,23 @@ export default {
                 }
             })
         },
+        signOut(){
+            this.loadingOut = true
+            let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
+            const data = {
+                phone_number: this.getUser.phoneNumber
+            }
+            axios.post('https://webapp.2bit.uz/api/v1/delete-session', data, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(res => {
+                if(res){
+                    localStorage.clear();
+                    this.$router.push('/login')
+                }
+            })
+        }
     },
 }
 </script>
@@ -146,7 +176,7 @@ export default {
   <style lang="scss">
     .profile{
         &-list{
-            height: calc(100vh - 226px);
+            height: calc(100vh - 300px);
             overflow-y: auto;
             overflow-x: hidden;
         }
@@ -157,6 +187,11 @@ export default {
                 align-items: center;
                 margin-bottom: 20px;
             }
+        }
+        &-bottom{
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
         &-verify{
             color: #fff;
@@ -210,6 +245,15 @@ export default {
         &-btn{
             width: 100%;
             background: #2ecc71;
+            height: 50px;
+            line-height: 50px;
+            border: 0;
+            border-radius: 5px;
+            color: #fff;
+        }
+        &-out{
+            width: 100%;
+            background: #e74c3c;
             height: 50px;
             line-height: 50px;
             border: 0;

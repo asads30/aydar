@@ -21,7 +21,6 @@
   <script>
   import Menu from '@/components/Menu.vue'
   import axios from 'axios'
-  import {mapGetters} from 'vuex'
 
   export default {
     name: 'BlogList',
@@ -33,58 +32,20 @@
     components: {
       Menu
     },
-    computed: {
-        ...mapGetters([
-            "getToken"
-        ])
-    },
     mounted() {
         let tg = window?.Telegram?.WebApp;
-        let user = tg?.initDataUnsafe;
         tg?.BackButton?.hide();
-        if(this.getToken){
-            axios.get('/api/news', {
-                headers: {
-                    Authorization: `Bearer ${this.getToken}`
-                }
-            }).then(res => {
-                if(res.status == 200){
-                    this.$store.commit('setNews', res.data.data)
-                    this.list = res.data.data
-                }
-            }).catch(err => {
-                console.log(err)
-            })
-        } else{
-            let data = {
-                "user_id": user?.user?.id ? user?.user?.id : 386567097,
-                "first_name": user?.user?.first_name ? user?.user?.first_name : "Asadbek",
-                "last_name": user?.user?.last_name ? user?.user?.last_name : "Ibragimov",
-                "username": user?.user?.username ? user?.user?.username : "@wpbrouz",
-                "language_code": user?.user?.language_code ? user?.user?.language_code : "ru"
+        let token = localStorage.getItem('auth_token') ? localStorage.getItem('auth_token') : this.getToken
+        axios.get('/api/news', {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-            axios.post('/api/getMe', data).then(res => {
-                if(res.status == 200){
-                    this.$store.commit('setUser', res.data.customer)
-                    this.$store.commit('setToken', res.data.token)
-                    if(res.data.customer.status == 0){
-                        this.$router.push('/verify')
-                    }
-                    axios.get('/api/news', {
-                        headers: {
-                            Authorization: `Bearer ${res.data.token}`
-                        }
-                    }).then(response => {
-                        if(response.status == 200){
-                            this.$store.commit('setNews', response.data.data)
-                            this.list = response.data.data
-                        }
-                    }).catch(error => {
-                        console.log(error)
-                    })
-                }
-            })
-        }
+        }).then(res => {
+            if(res.status == 200){
+                this.$store.commit('setNews', res.data.data)
+                this.list = res.data.data
+            }
+        })
     },
   }
   </script>

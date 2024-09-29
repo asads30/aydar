@@ -7,7 +7,7 @@
             </div>
             <div class="success-text">Лицензия успешно была оплачена</div>
         </div>
-        <router-link to="/permissions/" class="success-btn">Перейти к лицензиям</router-link>
+        <a href="https://t.me/uzhunterbot/startapp" class="success-btn">Перейти в приложение</a>
     </div>
 </template>
 
